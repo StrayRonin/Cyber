@@ -23,7 +23,7 @@ from flask import redirect
 
 def safe_target(next_value):
     """Return a safe URL to redirect to. THIS IS THE VULNERABLE PART."""
-    if not next_value.startswith("/") and not next_value.startswith("//"):
+    if next_value.startswith("/") and not next_value.startswith("//"):
         if not "\\" in next_value:
             if next_value.startswith("http:") or next_value.startswith("https:"):
                 if urllib.parse.urlparse(next_value).netloc == "":
