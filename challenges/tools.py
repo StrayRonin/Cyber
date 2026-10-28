@@ -26,7 +26,8 @@ def run_check(host):
     cmd = f"echo resolving {host}"
     try:
         out = subprocess.run(
-            cmd, shell=True, capture_output=True, text=True, timeout=5
+                [sys.executable, "-c", "import sys; print('resolving', sys.argv[1])", host],
+                capture_output=True, text=True, timeout=5,
         )
         return out.stdout + out.stderr
     except subprocess.SubprocessError:
