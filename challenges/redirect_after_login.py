@@ -21,12 +21,27 @@ import urllib
 from flask import redirect
 
 
-def safe_target(next_value):
-    """Return a safe URL to redirect to. THIS IS THE VULNERABLE PART."""#
-    if next_value.startswith("/") or not next_value.startswith("//") and urllib.parse.urlparse(next_value).netloc == "" and urllib.parse.urlparse(next_value).scheme == "" and "\\":
-        return next_value
-    return "/"
 
+def safe_target(next_value):
+    """Return a safe URL to redirect to."""
+    if not next_value:
+        return "/"
+
+    # Unquote to catch URL-encoded bypasses like %5C (backslash)
+    unquoted_value = urllib.parse.unquote(next_value)
+
+    # Reject any path starting with double slashes or backslashes to prevent open redirects
+    if unquoted_value.startswith(("//", "\\", "/\\")):
+        return "/"
+
+    # Parse the unquoted URL
+    parsed = urllib.parse.urlparse(unquoted_value)
+
+    # Ensure it is a relative path with no host (netloc) or scheme
+    if not parsed.netloc and not parsed.scheme and next_value.startswith("/"):
+        return next_value
+
+    return "/"
 
 def handle(request):
     return redirect(safe_target(request.args.get("next", "")))
