@@ -17,6 +17,7 @@ HINT: pathlib's Path.resolve(), then `.is_relative_to(PUBLIC_DIR)` (3.9+), or
 compare os.path.commonpath([...]). Flask's send_from_directory does this for you.
 """
 import os
+from pathLib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PUBLIC_DIR = os.path.join(os.path.dirname(HERE), "content", "files")
@@ -32,8 +33,18 @@ def index():
 
 def download(request):
     name = request.args.get("name", "")
+    base_dir = Path(PUBLIC_DIR).resolve()
+    target_path = Path(base_dir / name).resolve()
     # THIS IS THE VULNERABLE PART: `name` is trusted and joined straight on.
-    path = os.path.join(PUBLIC_DIR, name)
+    
+    try:
+        if not target_path.is_relative_to(base_dir):
+            return _denied()
+    except ValueError:
+        return _denied()
+
+    path = target_path
+
     try:
         with open(path, "rb") as f:
             body = f.read()
